@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <div class="title">
+        <span class="logo">ma<span class="accent">curl</span></span>
+        <span class="host" id="host">—</span>
+      </div>
+      <button id="clear" class="ghost" title="Listeyi temizle">Temizle</button>
+    </header>
+
+    <div id="toast" class="toast hidden">Kopyalandı ✓</div>
+
+    <div id="listView">
+      <div class="search-wrap">
+        <input
+          id="search"
+          type="search"
+          placeholder="Ara: path, method veya url..."
+          autocomplete="off"
+          spellcheck="false"
+        />
+      </div>
+
+      <ul id="list" class="list"></ul>
+
+      <div id="empty" class="empty">
+        Bu sekmede henüz istek yakalanmadı.<br />
+        <small>Sayfada gezin, fetch/XHR istekleri burada görünecek.</small>
+      </div>
+    </div>
+
+    <section id="detail" class="detail hidden">
+      <div class="detail-bar">
+        <button id="back" class="ghost" title="Listeye dön">← Geri</button>
+        <div class="detail-actions">
+          <button id="copyJson" class="ghost">Copy JSON</button>
+          <button id="copyCurl" class="ghost">Copy curl</button>
+        </div>
+      </div>
+
+      <div class="detail-meta">
+        <span id="detailMethod" class="method"></span>
+        <span id="detailStatus" class="status"></span>
+        <span id="detailType" class="detail-type"></span>
+      </div>
+      <div id="detailUrl" class="detail-url"></div>
+
+      <pre id="detailBody" class="json"></pre>
+    </section>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
