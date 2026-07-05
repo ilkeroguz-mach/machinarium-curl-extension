@@ -3,8 +3,7 @@
 ## Ne bu?
 
 Chrome eklentisi (Manifest V3, vanilla JS, build/framework/bağımlılık yok).
-İzin verilen iş sitelerinde (gencallar.com.tr, tepehome.com.tr,
-mymagazacilik.machinarium.dev) sayfanın yaptığı fetch/XHR isteklerini yakalar,
+Gezilen tüm sitelerde (`<all_urls>`) sayfanın yaptığı fetch/XHR isteklerini yakalar,
 popup'ta listeler, yanıt gövdesini (JSON) gösterir ve isteği tek tıkla **curl**
 komutu olarak panoya kopyalar. Ana kullanım amacı: yakalanan curl'ü Apidog'a
 (Import → cURL) yapıştırarak API'leri hızlıca dokümante/test etmek.
@@ -32,18 +31,21 @@ komutu olarak panoya kopyalar. Ana kullanım amacı: yakalanan curl'ü Apidog'a
 
 ## Dosyalar
 
-- `manifest.json` — izinler, host listesi, iki content script (bridge ISOLATED,
+- `manifest.json` — izinler (`<all_urls>`), iki content script (bridge ISOLATED,
   inject MAIN, ikisi de `document_start`)
 - `background.js` — yakalama, eşleştirme, storage; filtreler burada
 - `inject.js` — fetch/XHR yanıt interceptor'ı (MAIN world)
 - `bridge.js` — postMessage → runtime.sendMessage köprüsü (10 satır)
-- `popup.html/js/css` — liste + arama + detay görünümü; `buildCurl` curl üretimi burada
+- `popup.html/js/css` — liste + arama + detay görünümü; `buildCurl` curl üretimi burada.
+  Detay sayfası sekmeli: Yanıt / İstek Body / Header'lar (`activeTab`,
+  `renderTabContent`); kopyalama butonu aktif sekmenin içeriğini kopyalar.
 
 ## Önemli kararlar / dikkat edilecekler
 
-- **Host listesi 3 yerde senkron tutulmalı**: `manifest.json#host_permissions`,
+- **Tüm host'lar kapsanır** (`<all_urls>`): `manifest.json#host_permissions`,
   `manifest.json#content_scripts[*].matches` (iki blok) ve
-  `background.js#ALLOWED_HOSTS`. Yeni host eklerken hepsini güncelle.
+  `background.js#URL_FILTER`. Host kısıtlaması geri gelecekse bu 3 yer birlikte
+  güncellenmeli.
 - Filtrelenen istekler: `OPTIONS` method, URL'de `/_next/` veya `/cdn-cgi/`
   (`background.js#shouldSkip`).
 - curl üretimi (`popup.js#buildCurl`): `content-length` ve `host` atlanır,

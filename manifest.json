@@ -2,24 +2,20 @@
   "manifest_version": 3,
   "name": "macurl",
   "version": "1.0.0",
-  "description": "prod.gencallar.com'a giden istekleri yakalar ve curl olarak kopyalar.",
+  "description": "Sayfanın fetch/XHR isteklerini yakalar ve curl olarak kopyalar.",
   "permissions": ["webRequest", "storage", "tabs", "unlimitedStorage"],
-  "host_permissions": [
-    "*://*.gencallar.com.tr/*",
-    "*://*.tepehome.com.tr/*",
-    "*://mymagazacilik.machinarium.dev/*"
-  ],
+  "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js"
   },
   "content_scripts": [
     {
-      "matches": ["*://*.gencallar.com.tr/*", "*://*.tepehome.com.tr/*", "*://mymagazacilik.machinarium.dev/*"],
+      "matches": ["<all_urls>"],
       "js": ["bridge.js"],
       "run_at": "document_start"
     },
     {
-      "matches": ["*://*.gencallar.com.tr/*", "*://*.tepehome.com.tr/*", "*://mymagazacilik.machinarium.dev/*"],
+      "matches": ["<all_urls>"],
       "js": ["inject.js"],
       "run_at": "document_start",
       "world": "MAIN"

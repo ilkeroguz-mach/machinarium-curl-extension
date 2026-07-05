@@ -1,6 +1,6 @@
 # macurl
 
-İzin verilen sitelerde sayfanın yaptığı tüm **fetch/XHR** isteklerini yakalayan,
+Gezdiğin her sitede sayfanın yaptığı tüm **fetch/XHR** isteklerini yakalayan,
 popup'ta listeleyen, isteğin dönen **yanıtını (JSON)** gösteren ve tek tıkla
 **curl** ya da **JSON** olarak panoya kopyalayan bir Chrome eklentisi (Manifest V3).
 Kopyaladığın curl'ü doğrudan Apidog'a (**Import → cURL**) yapıştırabilirsin.
@@ -13,15 +13,16 @@ Kopyaladığın curl'ü doğrudan Apidog'a (**Import → cURL**) yapıştırabil
 
 ## Kullanım
 
-1. İzin verilen sitelerden birinde gezin (gencallar.com.tr, tepehome.com.tr,
-   mymagazacilik.machinarium.dev).
+1. Herhangi bir sitede gezin.
 2. macurl ikonuna tıkla → o sekmede yakalanan istekler listelenir (en yeni en üstte).
    Başlıkta o anki domain yazar. Yanıtı yakalanan istekler "yanıt ›" ile işaretlenir.
 3. Üstteki arama kutusuyla path/method/url'e göre filtrele.
-4. Listeden bir isteğe tıkla → detay sayfası açılır; dönen JSON yanıtı renklendirilmiş
-   olarak görünür.
-5. Detayda **Copy JSON** yanıt gövdesini, **Copy curl** isteğin curl'ünü panoya
-   kopyalar. **← Geri** ile listeye dönersin.
+4. Listeden bir isteğe tıkla → detay sayfası açılır. **Yanıt | İstek Body |
+   Header'lar** sekmeleriyle dönen JSON'u, gönderilen body'yi ve istek
+   header'larını görürsün (JSON içerik renklendirilmiş gösterilir).
+5. Soldaki kopyalama butonu aktif sekmenin içeriğini (**Copy JSON / Copy Body /
+   Copy Headers**), **Copy curl** isteğin curl'ünü panoya kopyalar. **← Geri**
+   ile listeye dönersin.
 
 ## Nasıl çalışır
 
@@ -67,7 +68,7 @@ Eklenti iki ayrı kanaldan veri toplar ve bunları arka planda birleştirir:
 
 | Dosya | Görev |
 |---|---|
-| `manifest.json` | MV3 manifest; izinler, host listesi, content script tanımları |
+| `manifest.json` | MV3 manifest; izinler, content script tanımları |
 | `background.js` | Service worker; istek yakalama, yanıt eşleştirme, storage |
 | `inject.js` | MAIN world interceptor; fetch/XHR yanıt gövdesini yakalar |
 | `bridge.js` | ISOLATED world köprüsü; postMessage → runtime.sendMessage |
@@ -75,7 +76,7 @@ Eklenti iki ayrı kanaldan veri toplar ve bunları arka planda birleştirir:
 
 ## Davranış ve sınırlar
 
-- Yalnızca **izin verilen host'larda** çalışır; popup **yalnızca aktif sekmenin**
+- **Tüm sitelerde** çalışır (`<all_urls>`); popup **yalnızca aktif sekmenin**
   isteklerini gösterir.
 - Sadece **fetch/XHR** istekleri yakalanır (statik asset gürültüsü yoktur).
 - `OPTIONS` (CORS preflight), `/_next/` (Next.js asset/data) ve `/cdn-cgi/`
@@ -84,10 +85,3 @@ Eklenti iki ayrı kanaldan veri toplar ve bunları arka planda birleştirir:
   İkili (binary) içerik veya interceptor'dan kaçan istekler için yanıt gösterilmez.
 - `content-length` ve `host` header'ları curl tarafından otomatik yönetildiği için
   çıktıya eklenmez; HTTP/2 pseudo-header'ları (`:authority` vb.) atlanır.
-
-## Yeni host ekleme
-
-1. `manifest.json` → `host_permissions` ve her iki `content_scripts.matches`
-   listesine `*://<host>/*` ekle.
-2. `background.js` → `ALLOWED_HOSTS` dizisine host'u ekle.
-3. `chrome://extensions`'da eklentiyi yeniden yükle (⟳).

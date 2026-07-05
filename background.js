@@ -1,11 +1,8 @@
 // macurl — fetch/XHR isteklerini yakalar, popup'ın curl üretebilmesi için saklar.
 
-// Yalnızca bu host'lara giden fetch/XHR istekleri yakalanır.
-// Yeni bir host eklemek için buraya ekle ve manifest.json -> host_permissions
-// kısmına da `*://<host>/*` olarak ekle.
-const ALLOWED_HOSTS = ["*.gencallar.com.tr", "*.tepehome.com.tr", "mymagazacilik.machinarium.dev"];
+// Tüm host'lara giden fetch/XHR istekleri yakalanır.
 const URL_FILTER = {
-  urls: ALLOWED_HOSTS.map((h) => `*://${h}/*`),
+  urls: ["<all_urls>"],
   types: ["xmlhttprequest"],
 };
 
