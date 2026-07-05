@@ -10,8 +10,9 @@ const searchEl = document.getElementById("search");
 const listViewEl = document.getElementById("listView");
 const detailEl = document.getElementById("detail");
 const backBtn = document.getElementById("back");
-const copyJsonBtn = document.getElementById("copyJson");
+const copyTabBtn = document.getElementById("copyTab");
 const copyCurlBtn = document.getElementById("copyCurl");
+const tabsEl = document.getElementById("tabs");
 const detailMethodEl = document.getElementById("detailMethod");
 const detailStatusEl = document.getElementById("detailStatus");
 const detailTypeEl = document.getElementById("detailType");
@@ -21,9 +22,11 @@ const detailBodyEl = document.getElementById("detailBody");
 let toastTimer = null;
 // Aktif sekmeye ait istekler (aramadan bağımsız), arama bunun üzerinde çalışır
 let currentRequests = [];
-// Detayda gösterilen istek ve "Copy JSON" için ham (highlight'sız) metin
+// Detayda gösterilen istek ve kopyalama için ham (highlight'sız) metin
 let detailReq = null;
-let detailJsonText = "";
+let detailTabText = "";
+// Aktif sekme: response | request | headers
+let activeTab = "response";
 
 document.addEventListener("DOMContentLoaded", render);
 
@@ -39,12 +42,23 @@ backBtn.addEventListener("click", showList);
 copyCurlBtn.addEventListener("click", () => {
   if (detailReq) copyCurl(detailReq);
 });
-copyJsonBtn.addEventListener("click", () => {
-  if (!detailJsonText) {
-    showToast("Kopyalanacak yanıt yok ✕");
+copyTabBtn.addEventListener("click", () => {
+  if (!detailTabText) {
+    showToast("Kopyalanacak içerik yok ✕");
     return;
   }
-  copyText(detailJsonText);
+  copyText(detailTabText);
+});
+
+// Sekme değişimi: içerik panelini ve kopyalama butonunu güncelle
+tabsEl.addEventListener("click", (e) => {
+  const btn = e.target.closest(".tab");
+  if (!btn || btn.dataset.tab === activeTab) return;
+  activeTab = btn.dataset.tab;
+  for (const t of tabsEl.querySelectorAll(".tab")) {
+    t.classList.toggle("active", t === btn);
+  }
+  if (detailReq) renderTabContent(detailReq);
 });
 
 // Arka plan yeni istek/yanıt yakaladıkça arayüzü güncel tut
@@ -156,22 +170,31 @@ function renderRow(req) {
   li.appendChild(wrap);
   li.appendChild(hint);
 
-  li.addEventListener("click", () => showDetail(req));
+  li.addEventListener("click", () => showDetail(req, true));
 
   return li;
 }
 
 function showList() {
   detailReq = null;
-  detailJsonText = "";
+  detailTabText = "";
   detailEl.classList.add("hidden");
   listViewEl.classList.remove("hidden");
 }
 
-function showDetail(req) {
+// resetTab: listeden yeni bir kayıt açılırken true; storage tazelemesinde
+// false kalır ki kullanıcının baktığı sekme değişmesin.
+function showDetail(req, resetTab) {
   detailReq = req;
   listViewEl.classList.add("hidden");
   detailEl.classList.remove("hidden");
+
+  if (resetTab && activeTab !== "response") {
+    activeTab = "response";
+    for (const t of tabsEl.querySelectorAll(".tab")) {
+      t.classList.toggle("active", t.dataset.tab === "response");
+    }
+  }
 
   const method = (req.method || "GET").toUpperCase();
   detailMethodEl.className = `method m-${method}`;
@@ -186,27 +209,86 @@ function showDetail(req) {
   detailTypeEl.textContent = (res && res.contentType ? res.contentType : "").split(";")[0];
   detailUrlEl.textContent = req.url;
 
-  // Yanıt gövdesini hazırla: JSON ise güzelleştir, değilse ham metin
-  const body = res && res.body != null ? res.body : null;
-  if (body == null) {
-    detailJsonText = "";
-    detailBodyEl.classList.add("empty-body");
-    detailBodyEl.textContent =
-      "Bu istek için yanıt gövdesi yakalanmadı.\n(fetch/XHR dışı, ikili içerik veya henüz tamamlanmamış olabilir.)";
-    return;
-  }
+  renderTabContent(req);
+}
 
+// Aktif sekmenin içeriğini panele bas, kopyalanacak ham metni hazırla
+function renderTabContent(req) {
+  if (activeTab === "request") {
+    copyTabBtn.textContent = "Copy Body";
+    renderRequestBody(req);
+  } else if (activeTab === "headers") {
+    copyTabBtn.textContent = "Copy Headers";
+    renderHeaders(req);
+  } else {
+    copyTabBtn.textContent = "Copy JSON";
+    renderResponseBody(req);
+  }
+}
+
+function renderEmpty(message) {
+  detailTabText = "";
+  detailBodyEl.classList.add("empty-body");
+  detailBodyEl.textContent = message;
+}
+
+// Metni panele bas: JSON ise güzelleştirip renklendir, değilse ham göster
+function renderText(text) {
   detailBodyEl.classList.remove("empty-body");
-  let pretty = body;
   try {
-    pretty = JSON.stringify(JSON.parse(body), null, 2);
-    detailJsonText = pretty;
+    const pretty = JSON.stringify(JSON.parse(text), null, 2);
+    detailTabText = pretty;
     detailBodyEl.innerHTML = syntaxHighlight(pretty);
   } catch (e) {
-    // JSON değil: düz metin olarak göster
-    detailJsonText = body;
-    detailBodyEl.textContent = body;
+    detailTabText = text;
+    detailBodyEl.textContent = text;
   }
+}
+
+function renderResponseBody(req) {
+  const res = req.response;
+  const body = res && res.body != null ? res.body : null;
+  if (body == null) {
+    renderEmpty(
+      "Bu istek için yanıt gövdesi yakalanmadı.\n(fetch/XHR dışı, ikili içerik veya henüz tamamlanmamış olabilir.)"
+    );
+    return;
+  }
+  renderText(body);
+}
+
+function renderRequestBody(req) {
+  const body = req.body;
+  if (!body || body.value == null) {
+    renderEmpty("Bu istek gövde (body) içermiyor.\n(GET istekleri genelde gövdesizdir.)");
+    return;
+  }
+  if (body.type === "formData") {
+    // formData: {alan: [değerler]} — tek değerli alanları sadeleştirip göster
+    const flat = {};
+    for (const [k, vals] of Object.entries(body.value)) {
+      flat[k] = Array.isArray(vals) && vals.length === 1 ? vals[0] : vals;
+    }
+    renderText(JSON.stringify(flat));
+    return;
+  }
+  renderText(body.value);
+}
+
+function renderHeaders(req) {
+  const entries = Object.entries(req.headers || {});
+  if (entries.length === 0) {
+    renderEmpty("Bu istek için header yakalanmadı.");
+    return;
+  }
+  detailBodyEl.classList.remove("empty-body");
+  detailTabText = entries.map(([name, value]) => `${name}: ${value}`).join("\n");
+  detailBodyEl.innerHTML = entries
+    .map(
+      ([name, value]) =>
+        `<span class="j-key">${escapeHtml(name)}:</span> ${escapeHtml(value)}`
+    )
+    .join("\n");
 }
 
 function syntaxHighlight(json) {

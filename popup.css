@@ -261,7 +261,35 @@ header {
   font-size: 11px;
   color: var(--muted);
   word-break: break-all;
+}
+
+.tabs {
+  display: flex;
+  gap: 2px;
+  padding: 0 14px;
   border-bottom: 1px solid var(--border);
+}
+
+.tab {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 12px;
+  font-family: inherit;
+  padding: 7px 10px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.tab:hover {
+  color: var(--text);
+}
+
+.tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
 }
 
 .json {
