@@ -1,4 +1,4 @@
-# macurl
+# Req Listener (MaCurl)
 
 Gezdiğin her sitede sayfanın yaptığı tüm **fetch/XHR** isteklerini yakalayan,
 popup'ta listeleyen, isteğin dönen **yanıtını (JSON)** gösteren ve tek tıkla
